@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Startup Outcome Prediction</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+            width: 100%;
+            max-width: 600px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin: 12px 0 6px;
+        }
+
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        .radio-group {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0 20px;
+        }
+
+        .radio-group label {
+            font-weight: normal;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .result {
+            margin-top: 20px;
+            font-size: 18px;
+            text-align: center;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Startup Outcome Prediction</h1>
+
+        <form id="predictionForm">
+            <label for="founded_at">Founded Year:</label>
+            <input type="number" name="founded_at" required>
+
+            <label for="first_funding_at">First Funding At:</label>
+            <input type="number" name="first_funding_at" required>
+
+            <label for="last_funding_at">Last Funding At:</label>
+            <input type="number" name="last_funding_at" required>
+
+            <label for="funding_rounds">Funding Rounds:</label>
+            <input type="number" name="funding_rounds" required>
+
+            <label for="funding_total_usd">Funding Total USD:</label>
+            <input type="number" name="funding_total_usd" required>
+
+            <label for="first_milestone_at">First Milestone At:</label>
+            <input type="number" name="first_milestone_at" required>
+
+            <label for="last_milestone_at">Last Milestone At:</label>
+            <input type="number" name="last_milestone_at" required>
+
+            <label for="milestones">Milestones:</label>
+            <input type="number" name="milestones" required>
+
+            <label for="relationships">Relationships:</label>
+            <input type="number" name="relationships" required>
+
+            <label for="investment_rounds">Investment Rounds:</label>
+            <input type="number" name="investment_rounds" required>
+
+            <label for="lat">Latitude:</label>
+            <input type="number" step="any" name="lat" required>
+
+            <label for="lng">Longitude:</label>
+            <input type="number" step="any" name="lng" required>
+
+            <label for="category">Category:</label>
+            <select name="category" required>
+                <option value="software">Software</option>
+                <option value="web">Web</option>
+                <option value="biotech">Biotech</option>
+                <option value="mobile">Mobile</option>
+                <option value="ecommerce">Ecommerce</option>
+            </select>
+
+            <label for="country">Country:</label>
+            <select name="country" required>
+                <option value="USA">USA</option>
+                <option value="IND">India</option>
+                <option value="GBR">UK</option>
+                <option value="CAN">Canada</option>
+                <option value="AUS">Australia</option>
+            </select>
+
+            <label>Prediction Type:</label>
+            <div class="radio-group">
+                <label><input type="radio" name="prediction_type" value="binary" checked> Binary</label>
+                <label><input type="radio" name="prediction_type" value="multiclass"> Multiclass</label>
+            </div>
+
+            <button type="submit">Predict</button>
+        </form>
+
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        document.getElementById("predictionForm").addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const data = {};
+
+            formData.forEach((value, key) => {
+                if (!isNaN(value) && value.trim() !== "") {
+                    data[key] = parseFloat(value);
+                } else {
+                    data[key] = value;
+                }
+            });
+
+            const predictionType = formData.get("prediction_type");
+            const url = predictionType === "binary" ? "/predict-binary" : "/predict-multiclass";
+
+            const resultDiv = document.getElementById("result");
+
+            try {
+                const response = await fetch(url, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    resultDiv.textContent = predictionType === "binary"
+                        ? `Binary Prediction: ${result.binary_prediction}`
+                        : `Multiclass Prediction: ${result.status}`;
+                } else {
+                    resultDiv.textContent = `Error: ${result.error}`;
+                }
+            } catch (err) {
+                resultDiv.textContent = `Error: ${err.message}`;
+            }
+        });
+    </script>
+
+</body>
+</html>
