@@ -4,12 +4,14 @@ import joblib
 import sqlite3, os
 from werkzeug.security import generate_password_hash, check_password_hash
 
+# Set up absolute database path (works on Render)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_NAME = os.path.join(BASE_DIR, "database.db")
+
 app = Flask(__name__, template_folder="templates")
-app.secret_key = "your_secret_key"
+app.secret_key = os.environ.get("SECRET_KEY", "your_secret_key")  # Load from env var on Render
 
-DB_NAME = "database.db"
-
-# Database Setup
+# ---------------- Database Setup ----------------
 def init_db():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
@@ -20,7 +22,11 @@ def init_db():
     conn.commit()
     conn.close()
 
-# Model Loading
+@app.before_first_request
+def setup_db():
+    init_db()
+
+# ---------------- Model Loading ----------------
 binary_scaler = joblib.load("binary_scaler.pkl")
 binary_model = joblib.load("xgboost_multiclass_model.pkl")
 multiclass_model = joblib.load("stacking_multiclass_model.pkl")
@@ -36,7 +42,7 @@ if hasattr(multiclass_model, "feature_names_in_"):
 else:
     multiclass_features = []
 
-# Feature Preparation
+# ---------------- Feature Preparation ----------------
 def prepare_features(data):
     Age_day = (2025 - data['founded_at']) * 365
     funding_per_round = data['funding_total_usd'] / max(data['funding_rounds'], 1)
@@ -62,7 +68,7 @@ def prepare_features(data):
 
     return pd.DataFrame([features])
 
-# Auth Routes
+# ---------------- Auth Routes ----------------
 @app.route('/')
 def home():
     if 'username' not in session:
@@ -123,7 +129,7 @@ def logout():
     flash("Logged out successfully!", "info")
     return redirect(url_for('login'))
 
-# Prediction Routes
+# ---------------- Prediction Routes ----------------
 @app.route("/predict-binary", methods=["POST"])
 def predict_binary():
     if 'username' not in session:
@@ -140,8 +146,6 @@ def predict_binary():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-
-# ---------------- Prediction Routes ----------------
 @app.route("/predict-multiclass", methods=["POST"])
 def predict_multiclass():
     try:
@@ -151,7 +155,7 @@ def predict_multiclass():
 
         input_df = prepare_features(data)
 
-        # Handle missing columns for model
+        # One-hot encode & align columns
         df_dummies = pd.get_dummies(input_df)
         for col in multiclass_features:
             if col not in df_dummies.columns:
@@ -168,6 +172,5 @@ def predict_multiclass():
     except Exception as e:
         return jsonify({"error": f"Prediction failed: {str(e)}"}), 500
 
-if __name__ == "__main__":
-    init_db()
-    app.run(host="0.0.0.0", port=os.environ.get("PORT", 10000))
+# ---------------- No app.run() ----------------
+# Gunicorn will be used on Render to run the app.
