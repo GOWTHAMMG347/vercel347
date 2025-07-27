@@ -1,8 +1,9 @@
 flask
 pandas
 numpy
-xgboost
-scikit-learn
+scikit-learn==1.6.1
+xgboost==3.0.2
+gunicorn
 joblib
 lightgbm
 werkzeug
