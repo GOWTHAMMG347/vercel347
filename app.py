@@ -9,7 +9,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_NAME = os.path.join(BASE_DIR, "database.db")
 
 app = Flask(__name__, template_folder="templates")
-app.secret_key = os.environ.get("SECRET_KEY", "your_secret_key")  # Secret from env for Render
+app.secret_key = os.environ.get("SECRET_KEY", "4EF246C33859B457DF9CA73CD2626")  # Secret from env for Render
 
 # ---------------- Database Setup ----------------
 def init_db():
