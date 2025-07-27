@@ -4,12 +4,12 @@ import joblib
 import sqlite3, os
 from werkzeug.security import generate_password_hash, check_password_hash
 
-# Set up absolute database path (works on Render)
+# ---------------- App & DB Config ----------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_NAME = os.path.join(BASE_DIR, "database.db")
 
 app = Flask(__name__, template_folder="templates")
-app.secret_key = os.environ.get("SECRET_KEY", "your_secret_key")  # Load from env var on Render
+app.secret_key = os.environ.get("SECRET_KEY", "your_secret_key")  # Secret from env for Render
 
 # ---------------- Database Setup ----------------
 def init_db():
@@ -22,8 +22,8 @@ def init_db():
     conn.commit()
     conn.close()
 
-@app.before_first_request
-def setup_db():
+# Run DB init at startup (Flask 3.x compatible)
+with app.app_context():
     init_db()
 
 # ---------------- Model Loading ----------------
@@ -173,4 +173,4 @@ def predict_multiclass():
         return jsonify({"error": f"Prediction failed: {str(e)}"}), 500
 
 # ---------------- No app.run() ----------------
-# Gunicorn will be used on Render to run the app.
+# Gunicorn will be used to start the app on Render
